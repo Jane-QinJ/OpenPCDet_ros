@@ -1,11 +1,8 @@
 # which go to the model you want to use
-# cfg_root: "/home/kin/workspace/OpenPCDet/tools/cfgs/custom_models/pointpillar.yaml"
-cfg_root: "/home/kin/workspace/OpenPCDet/tools/cfgs/custom_models/voxel_rcnn_car.yaml"
+cfg_root: "/home/firo/workspace/FieldRobotSense/experiment_result/pointpillar.yaml"
 
 # which go to the .pth
-# model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/pointpillar/kizu_detection80e/ckpt/checkpoint_epoch_80.pth"
-# model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/pointpillar/kizu1401_epoch80_pointpillar/ckpt/checkpoint_epoch_80.pth"
-model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/voxel_rcnn_car/kizu1401_epoch150_voxel_rcnn_resultShow/ckpt/checkpoint_epoch_143.pth"
+model_path: "/home/firo/workspace/FieldRobotSense/experiment_result/checkpoint_epoch_80.pth"
 
 # pointcloud_topic in the bag if you are not sure
 # rosbag info xxx.bag check the topic name

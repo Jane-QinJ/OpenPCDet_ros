@@ -80,6 +80,8 @@ def xyz_array_to_pointcloud2(points_sum, stamp=None, frame_id=None):
     msg.is_dense = int(np.isfinite(points_sum).all())
     msg.data = np.asarray(points_sum, np.float32).tostring()
     return msg
+# This callback is triggered whenever a new PointCloud2 message is received on the subscribed topic.
+# Converts the ROS message to a NumPy array, runs the detection model, filters the results based on the threshold, and publishes the results to RViz.
 
 def calculate_distance(box):
     """
@@ -213,7 +215,8 @@ class DemoDataset(DatasetTemplate):
 
         data_dict = self.prepare_data(data_dict=input_dict)
         return data_dict
-
+# This class initializes the detection model, processes the point cloud data, 
+# and handles the publishing of detection results to RViz.
 class Processor_ROS:
     def __init__(self, config_path, model_path):
         self.points = None
@@ -315,6 +318,7 @@ if __name__ == "__main__":
 
     proc_1.initialize()
     rospy.init_node('object_3d_detector_node')
+    # pointcloud_topic: "/velodyne_points" from config file
     sub_lidar_topic = [pointcloud_topic]
 
     cfg_from_yaml_file(cfg_root, cfg)
