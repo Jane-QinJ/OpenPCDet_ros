@@ -1,0 +1,6 @@
+devel_space: /home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/devel
+install: false
+install_space: /home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/install
+profile: default
+source_space: /home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/src
+workspace: /home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros

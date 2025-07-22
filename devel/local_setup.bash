@@ -1,0 +1,1 @@
+/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/devel/.private/catkin_tools_prebuild/local_setup.bash
