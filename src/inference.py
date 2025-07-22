@@ -175,6 +175,12 @@ def rslidar_callback(msg):
             # Publish the distance as a text marker in RViz
             publish_distance_text(distance, dt_box_lidar[i], msg.header.frame_id)
 
+            # Calculate the distance of the detected object
+            distance = calculate_distance(dt_box_lidar[i])
+            
+            # Publish the distance as a text marker in RViz
+            publish_distance_text(distance, dt_box_lidar[i], msg.header.frame_id)
+
     if(len(select_boxs)>0):
         # traker id is set into -1
         proc_1.pub_rviz.publish_3dbox(np.array(select_boxs), -1, pred_dict['name'])
@@ -224,7 +230,8 @@ class DemoDataset(DatasetTemplate):
 
         data_dict = self.prepare_data(data_dict=input_dict)
         return data_dict
-
+# This class initializes the detection model, processes the point cloud data, 
+# and handles the publishing of detection results to RViz.
 class Processor_ROS:
     def __init__(self, config_path, model_path):
         self.points = None
@@ -345,6 +352,7 @@ if __name__ == "__main__":
 
     proc_1.initialize()
     rospy.init_node('object_3d_detector_node')
+    # pointcloud_topic: "/velodyne_points" from config file
     sub_lidar_topic = [pointcloud_topic]
 
     cfg_from_yaml_file(cfg_root, cfg)
