@@ -1,11 +1,11 @@
 # which go to the model you want to use
 # cfg_root: "/home/kin/workspace/OpenPCDet/tools/cfgs/custom_models/pointpillar.yaml"
-cfg_root: "/home/kin/workspace/OpenPCDet/tools/cfgs/custom_models/voxel_rcnn_car.yaml"
+cfg_root: "/home/firo/Documents/workspace/OpenPCDet/output/custom_models/voxel_rcnn_car/kizu1401_epoch150_voxel_rcnn_resultShow/voxel_rcnn_car.yaml"
 
 # which go to the .pth
 # model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/pointpillar/kizu_detection80e/ckpt/checkpoint_epoch_80.pth"
 # model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/pointpillar/kizu1401_epoch80_pointpillar/ckpt/checkpoint_epoch_80.pth"
-model_path: "/home/kin/workspace/OpenPCDet/output/custom_models/voxel_rcnn_car/kizu1401_epoch150_voxel_rcnn_resultShow/ckpt/checkpoint_epoch_143.pth"
+model_path: "/home/firo/Documents/workspace/OpenPCDet/output/custom_models/voxel_rcnn_car/kizu1401_epoch150_voxel_rcnn_resultShow/ckpt/checkpoint_epoch_143.pth"
 
 # pointcloud_topic in the bag if you are not sure
 # rosbag info xxx.bag check the topic name
@@ -13,5 +13,6 @@ pointcloud_topic: "/velodyne_points" # default is from kitti2bag: /velodyne_poin
 
 # only the predict probablity over this threshold will be draw a box
 threshold: 0.7
-
+# threshold: 0.5
 viz_rate: 1.0
+output_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/tamura_result/raw_result_iou0.7/detection_distances_person3_20m.txt"

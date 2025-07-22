@@ -54,6 +54,7 @@ model_path = para_cfg["model_path"]
 threshold = para_cfg["threshold"]
 pointcloud_topic = para_cfg["pointcloud_topic"]
 RATE_VIZ = para_cfg["viz_rate"]
+output_file = para_cfg.get("output_file")
 inference_time_list = []
 
 
@@ -144,16 +145,26 @@ def rslidar_callback(msg):
 
     frame = msg.header.seq # frame id -> not timestamp
     msg_cloud = ros_numpy.point_cloud2.pointcloud2_to_array(msg)
-    print(f"points data from msg_cloud: {msg_cloud} /t")
+    # print(f"points data from msg_cloud: {msg_cloud} /t")
     
     np_p = get_xyz_points(msg_cloud, True)
 
     # Print points data received from the LiDAR
-    print(f"Points data received for frame {frame}:")
-    print(np_p)
+    # print(f"Points data received for frame {frame}:")
+    # print(np_p)
 
 
-    scores, dt_box_lidar, types, pred_dict = proc_1.run(np_p, frame)          
+    scores, dt_box_lidar, types, pred_dict = proc_1.run(np_p, frame)
+    # === 新增：写入txt文件 ===
+    # print("Writing detection results to txt...")
+    # with open(output_file, "a") as f:
+    #     for i, score in enumerate(scores):
+    #         print(f"score: {score}")  # 调试用
+    #         if score > threshold:
+    #             distance = calculate_distance(dt_box_lidar[i])
+    #             obj_type = pred_dict['name'][i]
+    #             print(f"Writing: {frame},{i},{distance:.3f},{score:.3f},{obj_type}")  # 调试用
+    #             f.write(f"{frame},{i},{distance:.3f},{score:.3f},{obj_type}\n")
     for i, score in enumerate(scores):
         if score>threshold:
             select_boxs.append(dt_box_lidar[i])
@@ -253,6 +264,25 @@ class Processor_ROS:
         self.net = self.net.to(self.device).eval()
 
     def get_template_prediction(self, num_samples):
+        """
+        Generates a template dictionary for predictions with pre-allocated numpy arrays.
+
+        Args:
+            num_samples (int): The number of samples for which the prediction template is created.
+
+        Returns:
+            dict: A dictionary containing the following keys with pre-allocated numpy arrays:
+                - 'name': Array of zeros with shape (num_samples,).
+                - 'truncated': Array of zeros with shape (num_samples,).
+                - 'occluded': Array of zeros with shape (num_samples,).
+                - 'alpha': Array of zeros with shape (num_samples,).
+                - 'bbox': Array of zeros with shape (num_samples, 4).
+                - 'dimensions': Array of zeros with shape (num_samples, 3).
+                - 'location': Array of zeros with shape (num_samples, 3).
+                - 'rotation_y': Array of zeros with shape (num_samples,).
+                - 'score': Array of zeros with shape (num_samples,).
+                - 'boxes_lidar': Array of zeros with shape (num_samples, 7).
+        """
         ret_dict = {
             'name': np.zeros(num_samples), 'truncated': np.zeros(num_samples),
             'occluded': np.zeros(num_samples), 'alpha': np.zeros(num_samples),
