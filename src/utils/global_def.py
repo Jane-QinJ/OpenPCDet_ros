@@ -8,8 +8,12 @@ Created on 23 Dec 2022
 Part of codes also refers: https://github.com/kwea123/ROS_notes
 """
 
-DETECTION_COLOR_MAP = {'Car': (255,255,0), 
-                       'Pedestrian': (0, 226, 255), 
+# DETECTION_COLOR_MAP = {'Car': (255,255,0), 
+#                        'Pedestrian': (0, 226, 255), 
+#                        'Cyclist': (141, 40, 255)} # color for detection, in format bgr
+#  change the class name for fitting my code  by qin 2024.6.11
+DETECTION_COLOR_MAP = {'vehicle': (255,255,0), 
+                       'pedestrian': (0, 226, 255), 
                        'Cyclist': (141, 40, 255)} # color for detection, in format bgr
 
 # connect vertic
