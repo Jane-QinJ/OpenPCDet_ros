@@ -1,5 +1,5 @@
-FROM nvidia/cuda:11.3.0-devel-ubuntu20.04
-LABEL maintainer="Kin Zhang <kin_eng@163.com>"
+FROM nvidia/cuda:11.3.1-devel-ubuntu20.04
+LABEL maintainer="Jane Qin <1139804380@qq.com>"
 # Just in case we need it
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -34,10 +34,10 @@ RUN apt update && apt install -y python3-pip
 RUN pip3 install torch==1.10.0+cu113 torchvision==0.11.0+cu113 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
 RUN pip3 install spconv-cu113
 RUN apt update && apt install -y python3-setuptools
-RUN mkdir -p /home/kin/workspace
-WORKDIR /home/kin/workspace
-RUN git clone https://github.com/Kin-Zhang/OpenPCDet.git
-RUN cd OpenPCDet && pip3 install -r requirements.txt
+# RUN mkdir -p /home/kin/workspace
+# WORKDIR /home/kin/workspace
+# RUN git clone https://github.com/Kin-Zhang/OpenPCDet.git
+# RUN cd OpenPCDet && pip3 install -r requirements.txt
 RUN pip3 install pyquaternion numpy==1.23 pillow==8.4 mayavi open3d
 # RUN cd OpenPCDet && python3 setup.py develop # need run inside the container!!!
 

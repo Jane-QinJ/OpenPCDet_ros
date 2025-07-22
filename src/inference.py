@@ -71,7 +71,7 @@ def xyz_array_to_pointcloud2(points_sum, stamp=None, frame_id=None):
     msg.fields = [
         PointField('x', 0, PointField.FLOAT32, 1),
         PointField('y', 4, PointField.FLOAT32, 1),
-        PointField('z', 8, PointField.FLOAT32, 1)
+        PointField('z', 8, PointField.FLOAT32, 1),
         # PointField('i', 12, PointField.FLOAT32, 1)
         ]
     msg.is_bigendian = False
@@ -80,6 +80,60 @@ def xyz_array_to_pointcloud2(points_sum, stamp=None, frame_id=None):
     msg.is_dense = int(np.isfinite(points_sum).all())
     msg.data = np.asarray(points_sum, np.float32).tostring()
     return msg
+
+def calculate_distance(box):
+    """
+    Calculate the Euclidean distance from the origin to the object's center.
+    Args:
+        box: A bounding box array [x, y, z, ...].
+    Returns:
+        distance: The Euclidean distance.
+    """
+    x, y, z = box[:3]  # Assuming box contains [x, y, z, ...]
+    distance = np.sqrt(x**2 + y**2 + z**2)
+    return distance
+
+
+def publish_distance_text(distance, box, frame_id,rate=10):
+    """
+    Publish the distance of the detected object as text in RViz.
+    Args:
+        distance: The distance to the object.
+        box: The bounding box of the object [x, y, z, ...].
+        frame_id: The frame ID to associate with the marker.
+    """
+    lifetime = 1.0/rate
+    marker = Marker()
+    marker.header.frame_id = frame_id
+    marker.header.stamp = rospy.Time.now()
+    marker.ns = "distance_text"
+    #  Ensure the ID is within the range of int32
+    marker.id = abs(hash(str(box))) % 2147483647  # Modulo to fit within int32 bounds
+    marker.type = Marker.TEXT_VIEW_FACING
+    marker.action = Marker.ADD
+    marker.lifetime = rospy.Duration(lifetime)
+
+    # Set the position of the text slightly above the object
+    marker.pose.position.x = box[0]
+    marker.pose.position.y = box[1]
+    marker.pose.position.z = box[2] + 1.0  # Offset above the object
+    marker.pose.orientation.x = 0.0
+    marker.pose.orientation.y = 0.0
+    marker.pose.orientation.z = 0.0
+    marker.pose.orientation.w = 1.0
+
+    # Set the text to display the distance
+    marker.text = f"{distance:.2f} m"
+
+    # Set the scale and color of the text
+    marker.scale.z = 0.5  # Text size
+    marker.color.a = 1.0  # Alpha
+    marker.color.r = 1.0  # Red
+    marker.color.g = 1.0  # Green
+    marker.color.b = 1.0  # Blue
+
+    # Publish the marker directly using the ROS publisher
+    distance_text_publisher.publish(marker)
 
 def rslidar_callback(msg):
     select_boxs, select_types = [],[]
@@ -90,13 +144,28 @@ def rslidar_callback(msg):
 
     frame = msg.header.seq # frame id -> not timestamp
     msg_cloud = ros_numpy.point_cloud2.pointcloud2_to_array(msg)
+    print(f"points data from msg_cloud: {msg_cloud} /t")
+    
     np_p = get_xyz_points(msg_cloud, True)
-    scores, dt_box_lidar, types, pred_dict = proc_1.run(np_p, frame)
+
+    # Print points data received from the LiDAR
+    print(f"Points data received for frame {frame}:")
+    print(np_p)
+
+
+    scores, dt_box_lidar, types, pred_dict = proc_1.run(np_p, frame)          
     for i, score in enumerate(scores):
         if score>threshold:
             select_boxs.append(dt_box_lidar[i])
             select_types.append(pred_dict['name'][i])
+            # Calculate the distance of the detected object
+            distance = calculate_distance(dt_box_lidar[i])
+            
+            # Publish the distance as a text marker in RViz
+            publish_distance_text(distance, dt_box_lidar[i], msg.header.frame_id)
+
     if(len(select_boxs)>0):
+        # traker id is set into -1
         proc_1.pub_rviz.publish_3dbox(np.array(select_boxs), -1, pred_dict['name'])
         print_str = f"Frame id: {frame}. Prediction results: \n"
         for i in range(len(pred_dict['name'])):
@@ -233,7 +302,10 @@ class Processor_ROS:
         pred_dict['boxes_lidar'] = pred_boxes
 
         return scores, boxes_lidar, types, pred_dict
- 
+    
+ # The script initializes the ROS node,
+# subscribes to the LiDAR point cloud topic, and sets up the publisher for visualization.
+# The node starts spinning to process incoming messages and perform 3D object detection.
 if __name__ == "__main__":
     no_frame_id = False
     proc_1 = Processor_ROS(cfg_root, model_path)
@@ -249,6 +321,7 @@ if __name__ == "__main__":
     
     sub_ = rospy.Subscriber(sub_lidar_topic[0], PointCloud2, rslidar_callback, queue_size=1, buff_size=2**24)
     pub_rviz = rospy.Publisher('detect_3dbox',MarkerArray, queue_size=10)
+    distance_text_publisher = rospy.Publisher('distance_text_marker', Marker, queue_size=10)
     proc_1.set_pub_rviz(pub_rviz)
     print(f"{bc.HEADER} ====================== {bc.ENDC}")
     print(" ===> [+] PCDet ros_node has started. Try to Run the rosbag file")
