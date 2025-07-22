@@ -94,4 +94,7 @@ def get_xyz_points(cloud_array, remove_nans=True, dtype=np.float):
     # Optionally fill in intensity values if available
     if has_intensity:
         points[..., 3] = cloud_array['intensity']
+    # Optionally fill in intensity values if available
+    if has_intensity:
+        points[..., 3] = cloud_array['intensity']
     return points
