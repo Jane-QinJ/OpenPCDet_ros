@@ -54,4 +54,4 @@ RUN apt-get install -y ros-noetic-catkin python3-catkin-tools
 # inside OpenPCDet_ws/src/OpenPCDet_ros
 # catkin build
 # source devel/setup.zsh
-# roslaunch openpcdet_3d_object_detection.launch
+# roslaunch openpcdet 3d_object_detector.launch
