@@ -13,7 +13,7 @@ Part of codes also refers: https://github.com/kwea123/ROS_notes
 #                        'Cyclist': (141, 40, 255)} # color for detection, in format bgr
 #  change the class name for fitting my code  by qin 2024.6.11
 DETECTION_COLOR_MAP = {'vehicle': (255,255,0), 
-                       'pedestrian': (0, 226, 255), 
+                       'Pedestrian': (0, 226, 255), 
                        'Cyclist': (141, 40, 255)} # color for detection, in format bgr
 
 # connect vertic
