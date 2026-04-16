@@ -1,7 +1,5 @@
 import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use("Agg")  # headless backend for containers/servers without X
 import matplotlib.pyplot as plt
 import os
 from scipy.interpolate import make_interp_spline
@@ -12,8 +10,6 @@ os.makedirs(out_dir, exist_ok=True)
 
 # 使用 mean_pred 作为纵轴
 Y_COL = 'mean_pred'
-Y_SCALE = 100.0  # m -> cm
-Y_UNIT = "cm"
 
 df = pd.read_csv(csv_file)
 
@@ -38,7 +34,7 @@ DIST_MIN = 0.0  # 坐标轴从 0 开始
 
 def fit_and_plot(sub_df, title_tag):
     x = sub_df['true_distance'].values.astype(float)
-    y = sub_df[Y_COL].values.astype(float) * Y_SCALE
+    y = sub_df[Y_COL].values.astype(float)
 
     coeffs = np.polyfit(x, y, 1)
     a, b = np.round(coeffs, 4)
@@ -84,19 +80,20 @@ def fit_and_plot(sub_df, title_tag):
             zorder=2)
 
     # 理想 y=x 线（从 0 开始）
-    ax.plot([DIST_MIN, DIST_MAX], [DIST_MIN * Y_SCALE, DIST_MAX * Y_SCALE],
+    ax.plot([DIST_MIN, DIST_MAX], [DIST_MIN, DIST_MAX],
             color='green', linestyle='--', label='Ideal y=x', zorder=1)
 
     # 轴标签 & 标题
     ax.set_xlabel("True Distance (m)")
-    ax.set_ylabel(f"Mean Predicted Distance ({Y_UNIT})")
+    ax.set_ylabel("Mean Predicted Distance (m)")
     ax.set_title(f"{title_tag} Mean Pred Fit (R²={r2:.6f})")
 
     # 统一刻度 & 从 0 开始 & 1:1 比例
     ax.set_xlim(DIST_MIN, DIST_MAX)
-    ax.set_ylim(DIST_MIN * Y_SCALE, DIST_MAX * Y_SCALE)
+    ax.set_ylim(DIST_MIN, DIST_MAX)
     ax.set_xticks(XTICKS)
-    ax.set_yticks([t * Y_SCALE for t in XTICKS])
+    ax.set_yticks(XTICKS)
+    ax.set_aspect('equal', adjustable='box')
 
     # 删除背景网格线
     # ax.grid(False)
@@ -120,7 +117,7 @@ def fit_and_plot(sub_df, title_tag):
         ax.plot([xi, xi], [0, ri], color='lightgray', linewidth=0.6)
 
     ax.set_xlabel("True Distance (m)")
-    ax.set_ylabel(f"Residual (mean_pred - fit) ({Y_UNIT})")
+    ax.set_ylabel("Residual (mean_pred - fit)")
     ax.set_title(f"{title_tag} Residuals (Var={residual_variance:.5f})")
 
     # x 轴从 0 开始
@@ -146,7 +143,7 @@ def analyze_error_distribution(df, out_dir):
 
     for i, distance in enumerate(distances):
         sub_df = df[df['true_distance'] == distance]
-        errors = (sub_df['mean_pred'] - distance) * Y_SCALE
+        errors = sub_df['mean_pred'] - distance
         mean_error = np.mean(errors)
         std_error = np.std(errors)
         error_stats.append({
@@ -184,7 +181,7 @@ def analyze_error_distribution(df, out_dir):
     ax.axhline(0, color='black', linewidth=1, linestyle='--', label='Zero Error')
 
     ax.set_xlabel("True Distance (m)")
-    ax.set_ylabel(f"Error ({Y_UNIT})")
+    ax.set_ylabel("Error (mean_pred - true_distance)")
     ax.set_title("Smoothed Error Distribution by Distance")
 
     # x 轴从 0 开始
@@ -236,7 +233,7 @@ ax.plot(error_stats['true_distance'].values,
         marker='o', label='Std Error')
 
 ax.set_xlabel("True Distance (m)")
-ax.set_ylabel(f"Standard Deviation of Error ({Y_UNIT})")
+ax.set_ylabel("Standard Deviation of Error")
 ax.set_title("Error Standard Deviation by Distance")
 
 ax.set_xlim(DIST_MIN, DIST_MAX)

@@ -51,7 +51,7 @@ RUN apt-get install -y ros-noetic-catkin python3-catkin-tools
 # docker run --gpus all --rm -d -ti -v /home/$USER/:/home/$USER/ --gpus all -e DISPLAY --net=host --ipc host --name pcdet_ros openpcdetros:latest /bin/zsh
 # docker exec -it pcdet_ros /bin/zsh
 
-# inside OpenPCDet_ws/
+# inside OpenPCDet_ws/src/OpenPCDet_ros
 # catkin build
 # source devel/setup.zsh
 # roslaunch openpcdet 3d_object_detector.launch
