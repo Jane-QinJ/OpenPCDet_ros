@@ -21,7 +21,7 @@ threshold: 0.7
 viz_rate: 1.0
 
 # detection result output file path
-output_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/Rice field/Part2_FrontWalking.txt"
+output_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/Rice field/Part3_Occlusion-emerge.txt"
 use_timestamped_output_file: true
 
 # Optional frame-wise evaluation driven by ground-truth CSV.
@@ -34,10 +34,12 @@ evaluation:
   match_key: "stamp"
   use_timestamped_filename: true
   class_name: "Pedestrian"
-  ground_truth_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/eval_generated/20251020_part2_ground_truth.csv"
+  ground_truth_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/eval_generated/20251020_part3_ground_truth.csv"
   frame_log_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/eval/frame_metrics.csv"
   summary_file: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/eval/summary.json"
   iou_threshold: 0.5
+  loose_iou_threshold: 0.3
+  center_error_threshold_m: 0.3
   track_iou_threshold: 0.1
   stable_frames: 3
   crowd_distance_threshold: 1.5
@@ -52,5 +54,5 @@ performance:
 
 archive:
   enabled: true
-  run_name: "part2_iou05"
+  run_name: "part3_occlusion"
   archive_dir: "/home/firo/Documents/workspace/OpenPCDet_ws/src/OpenPCDet_ros/result/eval/archive/part2_iou_sweep"

@@ -217,6 +217,8 @@ class FrameEvaluator:
         self.frame_log_path = _timestamped_output_path(eval_cfg.get("frame_log_file"), timestamp_enabled)
         self.summary_path = _timestamped_output_path(eval_cfg.get("summary_file"), timestamp_enabled)
         self.iou_threshold = float(eval_cfg.get("iou_threshold", 0.5))
+        self.loose_iou_threshold = float(eval_cfg.get("loose_iou_threshold", 0.3))
+        self.center_error_threshold_m = float(eval_cfg.get("center_error_threshold_m", 0.3))
         self.track_iou_threshold = float(eval_cfg.get("track_iou_threshold", 0.1))
         self.stable_frames = max(int(eval_cfg.get("stable_frames", 3)), 1)
         self.crowd_distance_threshold = float(eval_cfg.get("crowd_distance_threshold", 1.5))
@@ -244,6 +246,8 @@ class FrameEvaluator:
                 lambda: {
                     "gt": 0,
                     "tp": 0,
+                    "loose_tp": 0,
+                    "coarse_tp": 0,
                     "center_error_sum": 0.0,
                     "center_error_count": 0,
                     "gt_point_count_sum": 0,
@@ -467,11 +471,20 @@ class FrameEvaluator:
             best_pred_idx = None
             best_iou_any = 0.0
             best_confidence_any = None
+            loose_matched = False
+            coarse_localized = False
 
             if person_boxes.shape[0] > 0:
                 best_pred_idx = int(np.argmax(iou_matrix[gt_idx]))
                 best_iou_any = float(iou_matrix[gt_idx, best_pred_idx])
                 best_confidence_any = float(person_scores[best_pred_idx])
+                center_error_any = float(np.linalg.norm(person_boxes[best_pred_idx][:3] - gt_item["box"][:3]))
+                loose_matched = best_iou_any >= self.loose_iou_threshold
+                coarse_localized = center_error_any <= self.center_error_threshold_m
+                if loose_matched:
+                    self.metrics["distance_bins"][distance_bin]["loose_tp"] += 1
+                if coarse_localized:
+                    self.metrics["distance_bins"][distance_bin]["coarse_tp"] += 1
 
             if matched:
                 matched_pred_idx, matched_iou = gt_matches[gt_idx]
@@ -510,6 +523,8 @@ class FrameEvaluator:
                 "distance_bin": distance_bin,
                 "visible_ratio": "" if visible_ratio is None else round(float(visible_ratio), 4),
                 "matched": int(matched),
+                "loose_matched": int(loose_matched),
+                "coarse_localized": int(coarse_localized),
                 "matched_track_id": "" if matched_track_id is None else matched_track_id,
                 "matched_pred_local_index": "" if matched_pred_idx is None else int(person_indices[matched_pred_idx]),
                 "iou": round(float(matched_iou), 4),
@@ -539,6 +554,8 @@ class FrameEvaluator:
                 "distance_bin": "",
                 "visible_ratio": "",
                 "matched": 0,
+                "loose_matched": "",
+                "coarse_localized": "",
                 "matched_track_id": person_track_ids[pred_idx],
                 "matched_pred_local_index": int(person_indices[pred_idx]),
                 "iou": 0.0,
@@ -561,7 +578,12 @@ class FrameEvaluator:
                 os.makedirs(frame_log_dir, exist_ok=True)
             with open(self.frame_log_path, "w", newline="") as f:
                 if self.frame_rows:
-                    writer = csv.DictWriter(f, fieldnames=list(self.frame_rows[0].keys()))
+                    fieldnames = []
+                    for row in self.frame_rows:
+                        for key in row.keys():
+                            if key not in fieldnames:
+                                fieldnames.append(key)
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(self.frame_rows)
 
@@ -569,17 +591,23 @@ class FrameEvaluator:
             "class_name": self.class_name,
             "match_key": self.match_key,
             "iou_threshold": self.iou_threshold,
+            "loose_iou_threshold": self.loose_iou_threshold,
+            "center_error_threshold_m": self.center_error_threshold_m,
             "stable_frames": self.stable_frames,
             "total_gt": self.metrics["total_gt"],
             "total_tp": self.metrics["total_tp"],
             "total_fp": self.metrics["total_fp"],
             "total_fn": self.metrics["total_fn"],
+            "total_loose_tp": int(sum(v["loose_tp"] for v in self.metrics["distance_bins"].values())),
+            "total_coarse_tp": int(sum(v["coarse_tp"] for v in self.metrics["distance_bins"].values())),
             "mean_iou": self.metrics["matched_iou_sum"] / self.metrics["matched_count"] if self.metrics["matched_count"] else 0.0,
             "mean_confidence": self.metrics["matched_confidence_sum"] / self.metrics["matched_count"] if self.metrics["matched_count"] else 0.0,
             "mota": 1.0 - (
                 (self.metrics["total_fn"] + self.metrics["total_fp"] + self.metrics["id_switches"]) / self.metrics["total_gt"]
             ) if self.metrics["total_gt"] else 0.0,
             "id_switches": self.metrics["id_switches"],
+            "loose_recall": 0.0,
+            "coarse_localization_recall": 0.0,
             "distance_wise_recall": {},
             "visibility_wise_recall": {},
             "latency_frames": self.gt_latency,
@@ -588,6 +616,9 @@ class FrameEvaluator:
                 self.metrics["crowd_missed"] / self.metrics["crowd_gt"]
             ) if self.metrics["crowd_gt"] else None,
         }
+        if summary["total_gt"]:
+            summary["loose_recall"] = summary["total_loose_tp"] / summary["total_gt"]
+            summary["coarse_localization_recall"] = summary["total_coarse_tp"] / summary["total_gt"]
 
         for bin_name, values in self.metrics["distance_bins"].items():
             summary["distance_wise_recall"][bin_name] = (
@@ -600,6 +631,14 @@ class FrameEvaluator:
                 "tp": int(values["tp"]),
                 "fn": int(values["gt"] - values["tp"]),
                 "recall": values["tp"] / values["gt"] if values["gt"] else 0.0,
+                "loose_tp": int(values["loose_tp"]),
+                "detected_recall_loose_iou": (
+                    values["loose_tp"] / values["gt"] if values["gt"] else 0.0
+                ),
+                "coarse_tp": int(values["coarse_tp"]),
+                "coarse_localization_recall": (
+                    values["coarse_tp"] / values["gt"] if values["gt"] else 0.0
+                ),
                 "mean_center_error_m": (
                     values["center_error_sum"] / values["center_error_count"]
                     if values["center_error_count"] else None
